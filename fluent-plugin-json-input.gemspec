@@ -3,7 +3,7 @@ $:.push File.expand_path('../lib', __FILE__)
 
 Gem::Specification.new do |gem|
   gem.name        = "fluent-plugin-json-input"
-  gem.description = "Json input via tcp stream pluging for fluentd."
+  gem.description = "Json input via tcp stream for fluentd."
   gem.homepage    = "https://github.com/uchann2/fluentd-plugin-json-input.git"
   gem.summary     = gem.description
   gem.version     = File.read("VERSION").strip
