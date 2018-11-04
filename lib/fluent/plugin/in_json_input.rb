@@ -18,14 +18,14 @@ require 'fluent/plugin/input'
 
 module Fluent::Plugin
   class TcpInput < Input
-    Fluent::Plugin.register_input('tcp', self)
+    Fluent::Plugin.register_input('json_input', self)
 
     helpers :server, :parser, :extract, :compat_parameters
 
     desc 'Tag of output events.'
     config_param :tag, :string
     desc 'The port to listen to.'
-    config_param :port, :integer, default: 5170
+    config_param :port, :integer, default: 55444
     desc 'The bind address to listen to.'
     config_param :bind, :string, default: '0.0.0.0'
 
@@ -58,10 +58,13 @@ module Fluent::Plugin
       server_create(:in_tcp_server, @port, bind: @bind, resolve_name: !!@source_hostname_key) do |data, conn|
         conn.buffer << data
         begin
-          pos = 0
-          while i = conn.buffer.index(@delimiter, pos)
-            msg = conn.buffer[pos...i]
-            pos = i + @delimiter.length
+          first = conn.buffer.index("{")
+          last  = conn.buffer.rindex("}")
+          if first.nil? || last.nil?
+            log.error "invalid json string", message: data
+            next
+          end
+          msg = conn.buffer.slice!(first, last+1)
 
             @parser.parse(msg) do |time, record|
               unless time && record
@@ -75,8 +78,7 @@ module Fluent::Plugin
               record[@source_hostname_key] = conn.remote_host if @source_hostname_key
               router.emit(tag, time, record)
             end
-          end
-          conn.buffer.slice!(0, pos) if pos > 0
+          conn.buffer.slice!(first, last+1)
         end
       end
     end
