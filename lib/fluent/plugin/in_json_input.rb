@@ -65,6 +65,9 @@ module Fluent::Plugin
             next
           end
           msg = conn.buffer.slice!(first, last+1)
+          log.info "Received:", message: data
+          log.info "index of first {:", message: first
+          log.info "index of last }:", message: last
 
             @parser.parse(msg) do |time, record|
               unless time && record
